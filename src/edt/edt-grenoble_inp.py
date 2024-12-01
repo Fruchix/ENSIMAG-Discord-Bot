@@ -70,36 +70,32 @@ import requests
 import os
 
 # Function to perform the search and fetch the image
-def search_and_fetch_image(search_query, url, input_selector, image_selector, output_folder="images"):
+def search_and_fetch_image(search_query, url, output_folder="data"):
     # Initialize WebDriver (replace with the appropriate driver for your browser)
-    driver = webdriver.Chrome()  # Ensure you have ChromeDriver installed
+    opt = webdriver.ChromeOptions()
+    opt.headless = True
+
+    driver = webdriver.Chrome(options=opt)  # Ensure you have ChromeDriver installed
     driver.get(url)
 
     try:
         # Locate the input field and enter the search query
-        print("a")
         frame = driver.find_element(By.XPATH, "/html/frameset/frameset/frame")
-        print(frame)
         driver.switch_to.frame(frame)
 
         search_input = driver.find_element(By.CSS_SELECTOR, "input[name='search']")
-        print("b")
         search_input.send_keys(search_query)
-        print("c")
         search_input.send_keys(Keys.RETURN)
-        print("d")
 
         driver.implicitly_wait(5)
 
         driver.switch_to.parent_frame()
-        frame = driver.find_element(By.XPATH, "/html/frameset/frameset[2]/frame")
-        print(frame)
-        driver.switch_to.frame(frame)
-        image = driver.find_element(By.XPATH, "/html/body/img")
-        print(image)
-        image_url = image.get_attribute("src")
-        print(image_url)
 
+        frame = driver.find_element(By.XPATH, "/html/frameset/frameset[2]/frame")
+        driver.switch_to.frame(frame)
+
+        image = driver.find_element(By.XPATH, "/html/body/img")
+        image_url = image.get_attribute("src")
 
         if not image_url:
             raise ValueError("No image URL found for the given selector.")
@@ -125,6 +121,4 @@ search_query = "2aa"
 search_and_fetch_image(
     search_query=search_query,
     url="https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/standard/direct_planning.jsp",  # Replace with the target URL
-    input_selector="input[name='search']",  # Replace with the correct selector for the input field
-    image_selector="img.result-image",  # Replace with the correct selector for the image
 )
