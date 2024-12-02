@@ -1,4 +1,3 @@
-from time import sleep
 import requests
 
 from selenium import webdriver
@@ -8,7 +7,55 @@ from selenium.webdriver.common.keys import Keys
 class EdtGrenobleINP:
     def __init__(self) -> None:
         self.session = requests.Session()
-        self.session.get("https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/standard/direct_planning.jsp")
+        self._init_cookies_and_identifier()
+
+    def _init_cookies_and_identifier(self) -> None:
+        opt = webdriver.FirefoxOptions()
+        opt.headless = True
+
+        driver = webdriver.Firefox(options=opt)
+        driver.get("https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/standard/direct_planning.jsp")
+
+        # set session cookies
+        self.session.cookies.set("JSESSIONID", driver.get_cookie("JSESSIONID")["value"])
+        self.session.cookies.set("BIGipServer~ADE~pool_ade-inp-ro", driver.get_cookie("BIGipServer~ADE~pool_ade-inp-ro")["value"])
+
+        try:
+            driver.implicitly_wait(2)
+            driver.switch_to.frame("tree")
+
+            # search a group that exists: need to produce an image
+            search_input = driver.find_element(By.CSS_SELECTOR, "input[name='search']")
+            search_input.send_keys("2aa")
+            search_input.send_keys(Keys.RETURN)
+
+            driver.implicitly_wait(3)
+            driver.switch_to.parent_frame()
+            driver.switch_to.frame("et")
+
+            image = driver.find_element(By.XPATH, "/html/body/img")
+            image_url = image.get_attribute("src")
+        finally:
+            driver.quit()
+        
+        self.identifier = image_url.split("identifier=")[1].split("&")[0]
+
+    def get_image(self, idTree: int, week: int) -> bytes:
+        params = {
+            "identifier": self.identifier,
+            "projectId": 13,
+            "idPianoWeek": week,
+            "idPianoDay": "0,1,2,3,4,5,6",
+            "idTree": idTree,
+            "width": 793,
+            "height": 851,
+            "lunchName": "REPAS",
+            "displayMode": 1057855,
+            "showLoad": False,
+            "displayConfId": 15
+        }
+        response = self.session.get("https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/imageEt", params=params)
+        return response.content
 
     def get_identifier(self):
         # https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/custom/modules/plannings/imagemap.jsp?projectId=13&clearTree=false&week=17&reset=true&width=1032&height=851
@@ -64,33 +111,8 @@ PARAMETERS = {
     "displayConfId": 15
 }
 
-# edt = EdtGrenobleINP()
-# edt.get_identifier()
+edt = EdtGrenobleINP()
+img = edt.get_image(9314, 18)
 
-def get_identifier():
-    opt = webdriver.FirefoxOptions()
-    opt.headless = True
-
-    driver = webdriver.Firefox(options=opt)
-    driver.get("https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/standard/direct_planning.jsp")
-    try:
-        driver.implicitly_wait(2)
-        driver.switch_to.frame("tree")
-
-        # search a group that exists -> need to produce an image
-        search_input = driver.find_element(By.CSS_SELECTOR, "input[name='search']")
-        search_input.send_keys("2aa")
-        search_input.send_keys(Keys.RETURN)
-
-        driver.implicitly_wait(3)
-        driver.switch_to.parent_frame()
-        driver.switch_to.frame("et")
-
-        image = driver.find_element(By.XPATH, "/html/body/img")
-        image_url = image.get_attribute("src")
-
-        print(image_url)
-    finally:
-        driver.quit()
-
-    return image_url.split("identifier=")[1].split("&")[0]
+with open("data/edt-2aa.png", "wb") as f:
+    f.write(img)
