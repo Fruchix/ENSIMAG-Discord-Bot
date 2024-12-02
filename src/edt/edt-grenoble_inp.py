@@ -1,6 +1,10 @@
 from time import sleep
 import requests
 
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+
 class EdtGrenobleINP:
     def __init__(self) -> None:
         self.session = requests.Session()
@@ -63,58 +67,30 @@ PARAMETERS = {
 # edt = EdtGrenobleINP()
 # edt.get_identifier()
 
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-import requests
-import os
-
-# Function to perform the search and fetch the image
-def search_and_fetch_image(search_query, url, output_folder="data"):
-    # Initialize WebDriver (replace with the appropriate driver for your browser)
-    opt = webdriver.ChromeOptions()
+def get_identifier():
+    opt = webdriver.FirefoxOptions()
     opt.headless = True
 
-    driver = webdriver.Chrome(options=opt)  # Ensure you have ChromeDriver installed
-    driver.get(url)
-
+    driver = webdriver.Firefox(options=opt)
+    driver.get("https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/standard/direct_planning.jsp")
     try:
         driver.implicitly_wait(2)
         driver.switch_to.frame("tree")
 
+        # search a group that exists -> need to produce an image
         search_input = driver.find_element(By.CSS_SELECTOR, "input[name='search']")
-        search_input.send_keys(search_query)
+        search_input.send_keys("2aa")
         search_input.send_keys(Keys.RETURN)
 
-        driver.implicitly_wait(5)
+        driver.implicitly_wait(3)
         driver.switch_to.parent_frame()
         driver.switch_to.frame("et")
 
         image = driver.find_element(By.XPATH, "/html/body/img")
         image_url = image.get_attribute("src")
 
-        if not image_url:
-            raise ValueError("No image URL found for the given selector.")
-
-        # Download the image
-        response = requests.get(image_url)
-        response.raise_for_status()
-
-        # Save the image locally
-        os.makedirs(output_folder, exist_ok=True)
-        file_name = f"{output_folder}/{search_query.replace(' ', '_')}.jpg"
-        with open(file_name, "wb") as file:
-            file.write(response.content)
-
-        print(f"Image saved successfully at {file_name}")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+        print(image_url)
     finally:
         driver.quit()
 
-# Example usage
-search_query = "2aa"
-search_and_fetch_image(
-    search_query=search_query,
-    url="https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/standard/direct_planning.jsp",  # Replace with the target URL
-)
+    return image_url.split("identifier=")[1].split("&")[0]
