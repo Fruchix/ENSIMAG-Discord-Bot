@@ -79,20 +79,16 @@ def search_and_fetch_image(search_query, url, output_folder="data"):
     driver.get(url)
 
     try:
-        # Locate the input field and enter the search query
-        frame = driver.find_element(By.XPATH, "/html/frameset/frameset/frame")
-        driver.switch_to.frame(frame)
+        driver.implicitly_wait(2)
+        driver.switch_to.frame("tree")
 
         search_input = driver.find_element(By.CSS_SELECTOR, "input[name='search']")
         search_input.send_keys(search_query)
         search_input.send_keys(Keys.RETURN)
 
         driver.implicitly_wait(5)
-
         driver.switch_to.parent_frame()
-
-        frame = driver.find_element(By.XPATH, "/html/frameset/frameset[2]/frame")
-        driver.switch_to.frame(frame)
+        driver.switch_to.frame("et")
 
         image = driver.find_element(By.XPATH, "/html/body/img")
         image_url = image.get_attribute("src")
