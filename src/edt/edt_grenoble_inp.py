@@ -119,7 +119,7 @@ class EdtGrenobleInpClient:
 
         self.identifier = image_url.split("identifier=")[1].split("&")[0]
 
-    def download_edt(self, resource: EdtGrenobleInpResources, week: int):
+    def download_edt(self, resource: EdtGrenobleInpResources, week: int) -> None:
         self.options.set_resource(resource)
         self.options.set_week_starting_from_current(week)
 
@@ -134,14 +134,22 @@ class EdtGrenobleInpClient:
             print(e)
             return
 
+        if edt is None:
+            return
+
         with open(f"data/edt-{resource.name}-{self.options.week}.png", "wb") as f:
             f.write(edt)
 
-    def get_edt(self) -> bytes:
+    def get_edt(self) -> bytes | None:
         """Get the edt identified by the current EdtGrenobleInpOptions."""
         params = self.options.get_dict()
         params.update({"identifier": self.identifier})
 
-        return self.session.get(
-            "https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/imageEt", params=params
-        ).content
+        with self.session.get(
+            "https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/imageEt",
+            params=params,
+            stream=True
+        ) as r:
+            if r.status_code != 200 or r.headers["Content-Type"] != "image/gif":
+                return None
+            return r.content
