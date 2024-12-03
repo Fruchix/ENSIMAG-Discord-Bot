@@ -2,8 +2,8 @@ import datetime
 import requests
 
 from src.utils.datetime_utils import select_current_semaine, get_week_id
+from src.utils.selenium_utils import DriverFactory, DriverEnum
 
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from enum import Enum
@@ -11,7 +11,7 @@ from enum import Enum
 class EdtGrenobleInpResources(Enum):
     Group2AA = 9314
 
-class EdtGrenobleInpConfig:
+class EdtGrenobleInpOptions:
     DEFAULT_WIDTH = 793
     DEFAULT_HEIGHT = 851
     DEFAULT_ID_PIANO_DAY = "0,1,2,3,4,5,6"
@@ -66,17 +66,20 @@ class EdtGrenobleInpConfig:
             "displayConfId": self.DISPLAY_CONFIG_ID
         }
 
+
 class EdtGrenobleInpClient:
     def __init__(self) -> None:
         self.session = requests.Session()
         self._init_cookies_and_identifier()
-        self.options = EdtGrenobleInpConfig()
+        self.options = EdtGrenobleInpOptions()
 
     def _init_cookies_and_identifier(self) -> None:
-        opt = webdriver.FirefoxOptions()
-        opt.headless = True
+        driver = DriverFactory.build(
+            DriverEnum.CHROME,
+            executable_path='/usr/bin/chromedriver',
+            options=["--headless"]
+        )
 
-        driver = webdriver.Firefox(options=opt)
         driver.get("https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/standard/direct_planning.jsp")
 
         # set session cookies
@@ -121,7 +124,7 @@ class EdtGrenobleInpClient:
             print(e)
             return
 
-        with open(f"data/edt-{resource.name}-{week}.png", "wb") as f:
+        with open(f"data/edt-{resource.name}-{self.options.week}.png", "wb") as f:
             f.write(edt)
     
     def get_edt(self) -> bytes:
