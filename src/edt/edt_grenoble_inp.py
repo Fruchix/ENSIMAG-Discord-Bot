@@ -1,12 +1,9 @@
 import datetime
 import requests
 
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
 from enum import Enum
 
 from src.utils.datetime_utils import select_current_semaine, get_week_id
-from src.utils.selenium_utils import DriverFactory, DriverEnum
 
 
 class EdtGrenobleInpGroups(Enum):
@@ -79,12 +76,18 @@ class EdtGrenobleInpClient:
 
     def _init_session(self):
         self.session = requests.Session()
-        self.session.get("https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/standard/direct_planning.jsp")
+        self.session.get(
+            "https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/standard/direct_planning.jsp"
+        )
         self._init_identifier()
 
     def _init_identifier(self):
-        self.session.get("https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/custom/modules/plannings/direct_planning.jsp?resources=9314")
-        r = self.session.get("https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/custom/modules/plannings/imagemap.jsp?resources=9314&projectId=13&clearTree=false&width=842&height=851")
+        self.session.get(
+            "https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/custom/modules/plannings/direct_planning.jsp?resources=9314"
+        )
+        r = self.session.get(
+            "https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/custom/modules/plannings/imagemap.jsp?resources=9314&projectId=13&clearTree=false&width=842&height=851"
+        )
 
         self.identifier = r.text.split("identifier=")[1].split("&")[0]
 
@@ -94,47 +97,6 @@ class EdtGrenobleInpClient:
             self._init_session()
             r = request_method(args, kwargs)
         return r
-
-    def _init_cookies_and_identifier(self) -> None:
-        driver = DriverFactory.build(
-            DriverEnum.CHROME,
-            executable_path="/usr/bin/chromedriver",
-            options=["--headless"],
-        )
-
-        driver.get(
-            "https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/standard/direct_planning.jsp"
-        )
-
-        # set session cookies
-        self.session.cookies.set("JSESSIONID", driver.get_cookie("JSESSIONID")["value"])
-        self.session.cookies.set(
-            "BIGipServer~ADE~pool_ade-inp-ro",
-            driver.get_cookie("BIGipServer~ADE~pool_ade-inp-ro")["value"],
-        )
-
-        try:
-            driver.implicitly_wait(2)
-            driver.switch_to.frame("tree")
-
-            # search a group that exists: need to produce an image
-            search_input = driver.find_element(By.CSS_SELECTOR, "input[name='search']")
-            search_input.send_keys("2aa")
-            search_input.send_keys(Keys.RETURN)
-
-            driver.implicitly_wait(3)
-            driver.switch_to.parent_frame()
-            driver.switch_to.frame("et")
-
-            image = driver.find_element(By.XPATH, "/html/body/img")
-            image_url = image.get_attribute("src")
-        except Exception as e:  # bad practice to catch all exceptions
-            # TODO: log instead of print
-            print(e)
-        finally:
-            driver.quit()
-
-        self.identifier = image_url.split("identifier=")[1].split("&")[0]
 
     def download_edt(self, resource: EdtGrenobleInpGroups, week: int) -> None:
         self.options.set_resource(resource)
@@ -170,6 +132,7 @@ class EdtGrenobleInpClient:
             if r.status_code != 200 or r.headers["Content-Type"] != "image/gif":
                 return None
             return r.content
+
 
 edt = EdtGrenobleInpClient()
 edt.download_edt(EdtGrenobleInpGroups.Group2AA, 0)
