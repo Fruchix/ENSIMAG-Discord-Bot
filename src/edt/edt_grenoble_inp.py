@@ -1,23 +1,23 @@
 import datetime
 import requests
 
-from src.utils.datetime_utils import select_current_semaine, get_week_id
-from src.utils.selenium_utils import DriverFactory, DriverEnum
-
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from enum import Enum
 
+from src.utils.datetime_utils import select_current_semaine, get_week_id
+from src.utils.selenium_utils import DriverFactory, DriverEnum
 
-class EdtGrenobleInpResources(Enum):
-    Group2AA = 9314
+
+class EdtGrenobleInpGroups(Enum):
+    Group2AA = {"name": "2AA", "resource": 9314}
 
 
 class EdtGrenobleInpOptions:
     DEFAULT_WIDTH = 793
     DEFAULT_HEIGHT = 851
     DEFAULT_ID_PIANO_DAY = "0,1,2,3,4,5,6"
-    DEFAULT_RESOURCE = EdtGrenobleInpResources.Group2AA
+    DEFAULT_RESOURCE = EdtGrenobleInpGroups.Group2AA.value["resource"]
 
     # default values that should not be changed
     PROJECT_ID = 13
@@ -54,14 +54,14 @@ class EdtGrenobleInpOptions:
             + week
         )
 
-    def set_resource(self, resource: EdtGrenobleInpResources) -> None:
+    def set_resource(self, resource: EdtGrenobleInpGroups) -> None:
         self.resource = resource
 
     def get_dict(self):
         return {
             "idPianoWeek": self.week,
             "idPianoDay": self.id_piano_day,
-            "idTree": self.resource.value,
+            "idTree": self.resource.value["resource"],
             "width": self.width,
             "height": self.height,
             "projectId": self.PROJECT_ID,
@@ -74,9 +74,26 @@ class EdtGrenobleInpOptions:
 
 class EdtGrenobleInpClient:
     def __init__(self) -> None:
-        self.session = requests.Session()
-        self._init_cookies_and_identifier()
+        self._init_session()
         self.options = EdtGrenobleInpOptions()
+
+    def _init_session(self):
+        self.session = requests.Session()
+        self.session.get("https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/standard/direct_planning.jsp")
+        self._init_identifier()
+
+    def _init_identifier(self):
+        self.session.get("https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/custom/modules/plannings/direct_planning.jsp?resources=9314")
+        r = self.session.get("https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/custom/modules/plannings/imagemap.jsp?resources=9314&projectId=13&clearTree=false&width=842&height=851")
+
+        self.identifier = r.text.split("identifier=")[1].split("&")[0]
+
+    def request(self, request_method: requests.get, *args, **kwargs):
+        r: requests.Response = request_method(args, kwargs)
+        if r.status_code in [302, 404]:
+            self._init_session()
+            r = request_method(args, kwargs)
+        return r
 
     def _init_cookies_and_identifier(self) -> None:
         driver = DriverFactory.build(
@@ -119,7 +136,7 @@ class EdtGrenobleInpClient:
 
         self.identifier = image_url.split("identifier=")[1].split("&")[0]
 
-    def download_edt(self, resource: EdtGrenobleInpResources, week: int) -> None:
+    def download_edt(self, resource: EdtGrenobleInpGroups, week: int) -> None:
         self.options.set_resource(resource)
         self.options.set_week_starting_from_current(week)
 
@@ -148,8 +165,14 @@ class EdtGrenobleInpClient:
         with self.session.get(
             "https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/imageEt",
             params=params,
-            stream=True
+            stream=True,
         ) as r:
             if r.status_code != 200 or r.headers["Content-Type"] != "image/gif":
                 return None
             return r.content
+
+edt = EdtGrenobleInpClient()
+edt.download_edt(EdtGrenobleInpGroups.Group2AA, 0)
+edt.download_edt(EdtGrenobleInpGroups.Group2AA, 1)
+edt.download_edt(EdtGrenobleInpGroups.Group2AA, 2)
+edt.download_edt(EdtGrenobleInpGroups.Group2AA, 3)
