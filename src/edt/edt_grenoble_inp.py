@@ -11,10 +11,10 @@ class EdtGrenobleInpGroups(Enum):
 
 
 class EdtGrenobleInpOptions:
-    DEFAULT_WIDTH = 793
-    DEFAULT_HEIGHT = 851
-    DEFAULT_ID_PIANO_DAY = "0,1,2,3,4,5,6"
-    DEFAULT_RESOURCE = EdtGrenobleInpGroups.Group2AA.value["resource"]
+    DEFAULT_WIDTH = 900
+    DEFAULT_HEIGHT = 900
+    DEFAULT_ID_PIANO_DAY = "0,1,2,3,4"
+    DEFAULT_RESOURCE = EdtGrenobleInpGroupsEnum.Group2AA.value["resource"]
 
     # default values that should not be changed
     PROJECT_ID = 13
