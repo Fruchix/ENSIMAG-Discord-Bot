@@ -5,27 +5,32 @@ import arc
 
 from dotenv import load_dotenv
 from miru.ext import nav
-from arc import AutodeferMode
 
-from src.edt.edt_grenoble_inp import EdtGrenobleInpClient, EdtGrenobleInpGroups
+from src.edt.edt_grenoble_inp import EdtGrenobleInpClient, EdtGrenobleInpGroupsEnum
 
 load_dotenv()
-token=os.getenv("TOKEN")
-guilds=os.getenv("GUILDS").split(",")
+token = os.getenv("TOKEN")
+guilds = os.getenv("GUILDS").split(",")
 
 bot = hikari.GatewayBot(token)
 arc_client = arc.GatewayClient(bot)
 client = miru.Client.from_arc(arc_client)
 
+
 @arc_client.include
-@arc.slash_command("edt",
-                   "Ouvrir l'emploi du temps",
-                    guilds=guilds,
-                   autodefer=AutodeferMode.EPHEMERAL)
-async def my_command(ctx: arc.GatewayContext) -> None:
+@arc.slash_command("edt", "Ouvrir l'emploi du temps", guilds=guilds)
+async def my_command(
+    ctx: arc.GatewayContext,
+    group: arc.Option[
+        str,
+        arc.StrParams(
+            "Groupe", choices={g.value["name"]:g.name for g in EdtGrenobleInpGroupsEnum}
+        ),
+    ],
+) -> None:
     edt = EdtGrenobleInpClient()
 
-    group = EdtGrenobleInpGroups.Group2AA
+    group = EdtGrenobleInpGroupsEnum[group]
 
     embeds = []
     # current_week_id = edt.options.week
