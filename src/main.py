@@ -33,8 +33,7 @@ async def my_command(
     group: EdtGrenobleInpGroupsEnum = EdtGrenobleInpGroupsEnum[group]
 
     embeds = []
-    # current_week_id = edt.options.week
-    current_week_id = 17
+    current_week_id = edt.options.week
     for i in range(-2, 4):
         edt.download_edt(group, i)
 
