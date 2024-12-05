@@ -25,7 +25,7 @@ async def my_command(
         str,
         arc.StrParams(
             "Groupe",
-            choices={g.value["name"]:g.name for g in EdtGrenobleInpGroupsEnum},
+            choices={g.value["name"]: g.name for g in EdtGrenobleInpGroupsEnum},
         ),
     ],
     week: arc.Option[
@@ -33,7 +33,7 @@ async def my_command(
         arc.IntParams(
             "Semaine",
         ),
-    ] = 0
+    ] = 0,
 ) -> None:
     edt = EdtGrenobleInpClient()
     edt.options.set_week_starting_from_current(week)
@@ -42,15 +42,17 @@ async def my_command(
 
     embeds = []
     current_week_id = edt.options.week
-    for i in range(week-2, week+3):
-        edt.download_edt(group, i)
+    for i in range(-2, 3):
+        edt.download_edt(group, week + i)
 
-        embed = hikari.Embed(
-            title=f"Emploi du temps",
-        )\
-        .add_field("Groupe", group.value["name"], inline=True)\
-        .add_field("Semaine", edt.options.get_pretty_week(), inline=True)\
-        .set_image(f"data/edt-{group.name}-{i+current_week_id}.png")
+        embed = (
+            hikari.Embed(
+                title=f"Emploi du temps",
+            )
+            .add_field("Groupe", group.value["name"], inline=True)
+            .add_field("Semaine", edt.options.get_pretty_week(), inline=True)
+            .set_image(f"data/edt-{group.name}-{current_week_id+i}.png")
+        )
 
         embeds.append(embed)
 
