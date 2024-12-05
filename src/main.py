@@ -24,17 +24,25 @@ async def my_command(
     group: arc.Option[
         str,
         arc.StrParams(
-            "Groupe", choices={g.value["name"]:g.name for g in EdtGrenobleInpGroupsEnum}
+            "Groupe",
+            choices={g.value["name"]:g.name for g in EdtGrenobleInpGroupsEnum},
         ),
     ],
+    week: arc.Option[
+        int,
+        arc.IntParams(
+            "Semaine",
+        ),
+    ] = 0
 ) -> None:
     edt = EdtGrenobleInpClient()
+    edt.options.set_week_starting_from_current(week)
 
     group: EdtGrenobleInpGroupsEnum = EdtGrenobleInpGroupsEnum[group]
 
     embeds = []
     current_week_id = edt.options.week
-    for i in range(-2, 4):
+    for i in range(week-2, week+3):
         edt.download_edt(group, i)
 
         embed = hikari.Embed(
