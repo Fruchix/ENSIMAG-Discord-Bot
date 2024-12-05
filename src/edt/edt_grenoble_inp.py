@@ -6,7 +6,8 @@ from enum import Enum
 from src.utils.datetime_utils import select_current_semaine, get_week_id
 
 
-class EdtGrenobleInpGroups(Enum):
+class EdtGrenobleInpGroupsEnum(Enum):
+    Group1AA = {"name": "1AA", "resource": 6388}
     Group2AA = {"name": "2AA", "resource": 9314}
 
 
@@ -51,7 +52,7 @@ class EdtGrenobleInpOptions:
             + week
         )
 
-    def set_resource(self, resource: EdtGrenobleInpGroups) -> None:
+    def set_resource(self, resource: EdtGrenobleInpGroupsEnum) -> None:
         self.resource = resource
 
     def get_dict(self):
@@ -111,7 +112,7 @@ class EdtGrenobleInpClient:
             r = func_request_method(*args, **kwargs)
         return r
 
-    def download_edt(self, resource: EdtGrenobleInpGroups, week: int) -> None:
+    def download_edt(self, resource: EdtGrenobleInpGroupsEnum, week: int) -> None:
         self.options.set_resource(resource)
         self.options.set_week_starting_from_current(week)
 
@@ -149,10 +150,3 @@ class EdtGrenobleInpClient:
             if r.status_code != 200 or r.headers["Content-Type"] != "image/gif":
                 return None
             return r.content
-
-
-edt = EdtGrenobleInpClient()
-edt.download_edt(EdtGrenobleInpGroups.Group2AA, 0)
-edt.download_edt(EdtGrenobleInpGroups.Group2AA, 1)
-edt.download_edt(EdtGrenobleInpGroups.Group2AA, 2)
-edt.download_edt(EdtGrenobleInpGroups.Group2AA, 3)
