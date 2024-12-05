@@ -19,3 +19,7 @@ def select_current_semaine() -> datetime.date:
 def get_week_id(start_date: datetime.date, selected_date: datetime.date) -> int:
     """Get the week id of the given date, starting from the start_date."""
     return (selected_date - start_date).days // 7
+
+def get_first_day_of_week(start_date: datetime.date, week_id: int) -> datetime.date:
+    """Get the date of the first day of the week starting from the start_date."""
+    return start_date + datetime.timedelta(week_id * 7)

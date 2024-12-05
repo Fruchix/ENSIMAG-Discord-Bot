@@ -30,7 +30,7 @@ async def my_command(
 ) -> None:
     edt = EdtGrenobleInpClient()
 
-    group = EdtGrenobleInpGroupsEnum[group]
+    group: EdtGrenobleInpGroupsEnum = EdtGrenobleInpGroupsEnum[group]
 
     embeds = []
     # current_week_id = edt.options.week
@@ -39,9 +39,12 @@ async def my_command(
         edt.download_edt(group, i)
 
         embed = hikari.Embed(
-            title=f"Week {i+current_week_id}",
-        )
-        embed.set_image(f"data/edt-{group.name}-{i+current_week_id}.png")
+            title=f"Emploi du temps",
+        )\
+        .add_field("Groupe", group.value["name"], inline=True)\
+        .add_field("Semaine", edt.options.get_pretty_week(), inline=True)\
+        .set_image(f"data/edt-{group.name}-{i+current_week_id}.png")
+
         embeds.append(embed)
 
     navigator = nav.NavigatorView(pages=embeds)

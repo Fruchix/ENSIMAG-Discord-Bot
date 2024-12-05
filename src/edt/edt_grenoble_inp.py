@@ -3,7 +3,7 @@ import requests
 
 from enum import Enum
 
-from src.utils.datetime_utils import select_current_semaine, get_week_id
+from src.utils.datetime_utils import select_current_semaine, get_week_id, get_first_day_of_week
 
 
 class EdtGrenobleInpGroupsEnum(Enum):
@@ -25,7 +25,7 @@ class EdtGrenobleInpOptions:
     DISPLAY_CONFIG_ID = 15
 
     FIRST_WEEK_ID = 0
-    FIRST_WEEK_MONDAY_DATETIME = datetime.date.fromisoformat("2024-08-05")
+    FIRST_WEEK_MONDAY: datetime.date = datetime.date.fromisoformat("2024-08-05")
 
     def __init__(self) -> None:
         self.width = self.DEFAULT_WIDTH
@@ -48,7 +48,7 @@ class EdtGrenobleInpOptions:
             week (int, optional): number of weeks to shift from the current. Defaults to 0.
         """
         self.week = (
-            get_week_id(self.FIRST_WEEK_MONDAY_DATETIME, select_current_semaine())
+            get_week_id(self.FIRST_WEEK_MONDAY, select_current_semaine())
             + week
         )
 
@@ -68,6 +68,11 @@ class EdtGrenobleInpOptions:
             "showLoad": self.SHOW_LOAD,
             "displayConfId": self.DISPLAY_CONFIG_ID,
         }
+
+    def get_pretty_week(self) -> str:
+        fd = get_first_day_of_week(self.FIRST_WEEK_MONDAY, self.week)
+        ld = fd + datetime.timedelta(days=4)
+        return f"Du {fd.strftime("%d-%m-%Y")} au {ld.strftime("%d-%m-%Y")}."
 
 
 class EdtGrenobleInpClient:
