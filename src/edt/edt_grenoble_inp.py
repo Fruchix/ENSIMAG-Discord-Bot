@@ -72,7 +72,7 @@ class EdtGrenobleInpOptions:
     def get_pretty_week(self) -> str:
         fd = get_first_day_of_week(self.FIRST_WEEK_MONDAY, self.week)
         ld = fd + datetime.timedelta(days=4)
-        return f"Du {fd.strftime("%d-%m-%Y")} au {ld.strftime("%d-%m-%Y")}."
+        return f"Du {fd.strftime('%d-%m-%Y')} au {ld.strftime('%d-%m-%Y')}."
 
 
 class EdtGrenobleInpClient:
