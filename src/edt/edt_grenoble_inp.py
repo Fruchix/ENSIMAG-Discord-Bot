@@ -71,8 +71,8 @@ class EdtGrenobleInpOptions:
 
 class EdtGrenobleInpClient:
     def __init__(self) -> None:
-        self._init_session()
         self.options = EdtGrenobleInpOptions()
+        self.identifier = None
 
     def _init_session(self):
         self.session = requests.Session()
@@ -91,11 +91,24 @@ class EdtGrenobleInpClient:
 
         self.identifier = r.text.split("identifier=")[1].split("&")[0]
 
-    def request(self, request_method: requests.get, *args, **kwargs):
-        r: requests.Response = request_method(args, kwargs)
+    def request(self, func_request_method, *args, **kwargs) -> requests.Response:
+        """Wrapper to any http method from the requests module.
+        Initialize the session and the identifier if they aren't already.
+
+        :param func_request_method: an existing method from the requests module
+        :type func_request_method: function
+        :return: the request's response
+        :rtype: requests.Response
+        """
+        r: requests.Response
+        if self.identifier is None:
+            self._init_session()
+
+        r = func_request_method(*args, **kwargs)
+
         if r.status_code in [302, 404]:
             self._init_session()
-            r = request_method(args, kwargs)
+            r = func_request_method(*args, **kwargs)
         return r
 
     def download_edt(self, resource: EdtGrenobleInpGroups, week: int) -> None:
@@ -121,10 +134,14 @@ class EdtGrenobleInpClient:
 
     def get_edt(self) -> bytes | None:
         """Get the edt identified by the current EdtGrenobleInpOptions."""
+        if self.identifier is None:
+            self._init_session()
+
         params = self.options.get_dict()
         params.update({"identifier": self.identifier})
 
-        with self.session.get(
+        with self.request(
+            self.session.get,
             "https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/imageEt",
             params=params,
             stream=True,
