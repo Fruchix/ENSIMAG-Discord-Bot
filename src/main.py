@@ -18,7 +18,7 @@ client = miru.Client.from_arc(arc_client)
 
 
 @arc_client.include
-@arc.slash_command("edt", "Ouvrir l'emploi du temps", guilds=guilds)
+@arc.slash_command("edt", "Ouvrir l'emploi du temps", is_dm_enabled=True)
 async def my_command(
     ctx: arc.GatewayContext,
     group: arc.Option[
@@ -36,12 +36,10 @@ async def my_command(
     ] = 0,
 ) -> None:
     edt = EdtGrenobleInpClient()
-    edt.options.set_week_starting_from_current(week)
 
     group: EdtGrenobleInpGroupsEnum = EdtGrenobleInpGroupsEnum[group]
 
     embeds = []
-    current_week_id = edt.options.week
     for i in range(-2, 3):
         edt.download_edt(group, week + i)
 
@@ -51,7 +49,7 @@ async def my_command(
             )
             .add_field("Groupe", group.value["name"], inline=True)
             .add_field("Semaine", edt.options.get_pretty_week(), inline=True)
-            .set_image(f"data/edt-{group.name}-{current_week_id+i}.png")
+            .set_image(f"data/edt-{group.name}-{edt.options.week}.png")
         )
 
         embeds.append(embed)
