@@ -17,7 +17,7 @@ class EdtGrenobleInpOptions:
     DEFAULT_WIDTH = 900
     DEFAULT_HEIGHT = 900
     DEFAULT_ID_PIANO_DAY = "0,1,2,3,4"
-    DEFAULT_RESOURCE = EdtGrenobleInpGroupsEnum.Group2AA.value["resource"]
+    DEFAULT_GROUP = EdtGrenobleInpGroupsEnum.Group2AA
 
     # default values that should not be changed
     PROJECT_ID = 13
@@ -33,7 +33,7 @@ class EdtGrenobleInpOptions:
         self.width = self.DEFAULT_WIDTH
         self.height = self.DEFAULT_HEIGHT
         self.id_piano_day = self.DEFAULT_ID_PIANO_DAY
-        self.resource = self.DEFAULT_RESOURCE
+        self.group = self.DEFAULT_GROUP
         # get the current week by default
         self.set_week_id_relative_to_current(0)
 
@@ -54,14 +54,14 @@ class EdtGrenobleInpOptions:
             + selected_week
         )
 
-    def set_resource(self, resource: EdtGrenobleInpGroupsEnum) -> None:
-        self.resource = resource
+    def set_group(self, group: EdtGrenobleInpGroupsEnum) -> None:
+        self.group = group
 
     def get_dict(self):
         return {
             "idPianoWeek": self.week_id,
             "idPianoDay": self.id_piano_day,
-            "idTree": self.resource.value["resource"],
+            "idTree": self.group.value["resource"],
             "width": self.width,
             "height": self.height,
             "projectId": self.PROJECT_ID,
@@ -119,18 +119,18 @@ class EdtGrenobleInpClient:
             r = func_request_method(*args, **kwargs)
         return r
 
-    def download_edt(self, resource: EdtGrenobleInpGroupsEnum, selected_week: int) -> None:
+    def download_edt(self, group: EdtGrenobleInpGroupsEnum, selected_week: int) -> None:
         """Download the calendar according to the selected week.
 
-        :param resource: the group identifying wich timetable to get
-        :type resource: EdtGrenobleInpGroupsEnum
+        :param group: the group identifying wich timetable to get
+        :type group: EdtGrenobleInpGroupsEnum
         :param selected_week: relatively to the current week being 0
         :type selected_week: int
         """
-        self.options.set_resource(resource)
+        self.options.set_group(group)
         self.options.set_week_id_relative_to_current(selected_week)
 
-        filename = f"data/edt-{resource.name}-{self.options.week_id}.png"
+        filename = f"data/edt-{group.name}-{self.options.week_id}.png"
 
         # download the file only if it was downloaded more than a day ago, 
         # or if it was downloaded more than a hour ago but is for the current week
