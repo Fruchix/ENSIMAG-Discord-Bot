@@ -1,7 +1,7 @@
 import datetime
 
 
-def select_current_semaine() -> datetime.date:
+def select_current_week() -> datetime.date:
     """Select the first day of the current week. If it is the weekend, select the first day of the next week."""
 
     # get first day of the week

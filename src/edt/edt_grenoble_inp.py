@@ -5,7 +5,7 @@ import os
 from enum import Enum
 from pathlib import Path
 
-from src.utils.datetime_utils import select_current_semaine, get_week_id, get_first_day_of_week
+from src.utils.datetime_utils import select_current_week, get_week_id, get_first_day_of_week
 
 
 class EdtGrenobleInpGroupsEnum(Enum):
@@ -35,7 +35,7 @@ class EdtGrenobleInpOptions:
         self.id_piano_day = self.DEFAULT_ID_PIANO_DAY
         self.resource = self.DEFAULT_RESOURCE
         # get the current week by default
-        self.set_week_id_starting_from_current(0)
+        self.set_week_id_relative_to_current(0)
 
     def set_width(self, width: int) -> None:
         self.width = width
@@ -43,15 +43,15 @@ class EdtGrenobleInpOptions:
     def set_height(self, height: int) -> None:
         self.height = height
 
-    def set_week_id_starting_from_current(self, current_week: int = 0) -> None:
-        """Set the week starting from the selected current week.
+    def set_week_id_relative_to_current(self, selected_week: int = 0) -> None:
+        """Set the week id (from ADE) by selecting a week relative to the current week.
 
-        Args:
-            week (int, optional): number of weeks to shift from the current. Defaults to 0.
+        :param current_week: number of weeks to shift from the current, defaults to 0
+        :type current_week: int, optional
         """
         self.week_id = (
-            get_week_id(self.FIRST_WEEK_MONDAY, select_current_semaine())
-            + current_week
+            get_week_id(self.FIRST_WEEK_MONDAY, select_current_week())
+            + selected_week
         )
 
     def set_resource(self, resource: EdtGrenobleInpGroupsEnum) -> None:
@@ -128,7 +128,7 @@ class EdtGrenobleInpClient:
         :type selected_week: int
         """
         self.options.set_resource(resource)
-        self.options.set_week_id_starting_from_current(selected_week)
+        self.options.set_week_id_relative_to_current(selected_week)
 
         filename = f"data/edt-{resource.name}-{self.options.week_id}.png"
 
