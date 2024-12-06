@@ -35,7 +35,7 @@ class EdtGrenobleInpOptions:
         self.id_piano_day = self.DEFAULT_ID_PIANO_DAY
         self.resource = self.DEFAULT_RESOURCE
         # get the current week by default
-        self.set_week_starting_from_current(0)
+        self.set_week_id_starting_from_current(0)
 
     def set_width(self, width: int) -> None:
         self.width = width
@@ -43,15 +43,15 @@ class EdtGrenobleInpOptions:
     def set_height(self, height: int) -> None:
         self.height = height
 
-    def set_week_starting_from_current(self, week: int = 0) -> None:
-        """Set the week starting from the current week.
+    def set_week_id_starting_from_current(self, current_week: int = 0) -> None:
+        """Set the week starting from the selected current week.
 
         Args:
             week (int, optional): number of weeks to shift from the current. Defaults to 0.
         """
-        self.week = (
+        self.week_id = (
             get_week_id(self.FIRST_WEEK_MONDAY, select_current_semaine())
-            + week
+            + current_week
         )
 
     def set_resource(self, resource: EdtGrenobleInpGroupsEnum) -> None:
@@ -59,7 +59,7 @@ class EdtGrenobleInpOptions:
 
     def get_dict(self):
         return {
-            "idPianoWeek": self.week,
+            "idPianoWeek": self.week_id,
             "idPianoDay": self.id_piano_day,
             "idTree": self.resource.value["resource"],
             "width": self.width,
@@ -72,7 +72,7 @@ class EdtGrenobleInpOptions:
         }
 
     def get_pretty_week(self) -> str:
-        fd = get_first_day_of_week(self.FIRST_WEEK_MONDAY, self.week)
+        fd = get_first_day_of_week(self.FIRST_WEEK_MONDAY, self.week_id)
         ld = fd + datetime.timedelta(days=4)
         return f"Du {fd.strftime('%d-%m-%Y')} au {ld.strftime('%d-%m-%Y')}."
 
@@ -119,16 +119,25 @@ class EdtGrenobleInpClient:
             r = func_request_method(*args, **kwargs)
         return r
 
-    def download_edt(self, resource: EdtGrenobleInpGroupsEnum, week: int) -> None:
+    def download_edt(self, resource: EdtGrenobleInpGroupsEnum, selected_week: int) -> None:
+        """Download the calendar according to the selected week.
+
+        :param resource: the group identifying wich timetable to get
+        :type resource: EdtGrenobleInpGroupsEnum
+        :param selected_week: relatively to the current week being 0
+        :type selected_week: int
+        """
         self.options.set_resource(resource)
-        self.options.set_week_starting_from_current(week)
+        self.options.set_week_id_starting_from_current(selected_week)
 
-        filename = f"data/edt-{resource.name}-{self.options.week}.png"
+        filename = f"data/edt-{resource.name}-{self.options.week_id}.png"
 
-        # download the file only if it was downloaded more than a day ago
+        # download the file only if it was downloaded more than a day ago, 
+        # or if it was downloaded more than a hour ago but is for the current week
         if Path(filename).is_file():
             mtime = datetime.datetime.fromtimestamp(os.stat(filename).st_mtime)
-            if mtime > datetime.datetime.now() - datetime.timedelta(days=1):
+            threshold = datetime.timedelta(hours=1) if selected_week == 0 else datetime.timedelta(days=1)
+            if mtime > datetime.datetime.now() - threshold:
                 return
 
         try:

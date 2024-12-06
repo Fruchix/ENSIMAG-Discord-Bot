@@ -49,7 +49,7 @@ async def my_command(
             )
             .add_field("Groupe", group.value["name"], inline=True)
             .add_field("Semaine", edt.options.get_pretty_week(), inline=True)
-            .set_image(f"data/edt-{group.name}-{edt.options.week}.png")
+            .set_image(f"data/edt-{group.name}-{edt.options.week_id}.png")
         )
 
         embeds.append(embed)
