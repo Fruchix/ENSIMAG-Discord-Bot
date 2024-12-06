@@ -1,7 +1,9 @@
 import datetime
 import requests
+import os
 
 from enum import Enum
+from pathlib import Path
 
 from src.utils.datetime_utils import select_current_semaine, get_week_id, get_first_day_of_week
 
@@ -121,6 +123,14 @@ class EdtGrenobleInpClient:
         self.options.set_resource(resource)
         self.options.set_week_starting_from_current(week)
 
+        filename = f"data/edt-{resource.name}-{self.options.week}.png"
+
+        # download the file only if it was downloaded more than a day ago
+        if Path(filename).is_file():
+            mtime = datetime.datetime.fromtimestamp(os.stat(filename).st_mtime)
+            if mtime > datetime.datetime.now() - datetime.timedelta(days=1):
+                return
+
         try:
             edt = self.get_edt()
         except requests.exceptions.RequestException as e:
@@ -135,7 +145,7 @@ class EdtGrenobleInpClient:
         if edt is None:
             return
 
-        with open(f"data/edt-{resource.name}-{self.options.week}.png", "wb") as f:
+        with open(filename, "wb") as f:
             f.write(edt)
 
     def get_edt(self) -> bytes | None:
