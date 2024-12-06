@@ -46,10 +46,12 @@ async def my_command(
         embed = (
             hikari.Embed(
                 title=f"Emploi du temps",
+                color=hikari.Color.of(0x8dc63f),
             )
             .add_field("Groupe", group.value["name"], inline=True)
             .add_field("Semaine", edt.options.get_pretty_week(), inline=True)
             .set_image(f"data/edt-{group.name}-{edt.options.week_id}.png")
+            .set_footer("📌 Stolen from ADE")
         )
 
         embeds.append(embed)
