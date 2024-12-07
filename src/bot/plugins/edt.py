@@ -4,10 +4,12 @@ import miru
 
 from miru.ext import nav
 from src.bot.components.decorators import exclusive_items
+from src.bot.components.buttons import StopAndRemoveComponentsButton
 from src.edt.edt_grenoble_inp import EdtGrenobleInpClient, EdtGrenobleInpGroupsEnum
 
 
 plugin = arc.GatewayPlugin("edt")
+
 
 @plugin.include
 @arc.slash_command("edt", "Ouvrir l'emploi du temps", is_dm_enabled=True)
@@ -45,7 +47,7 @@ async def my_command(
         embed = (
             hikari.Embed(
                 title=f"Emploi du temps",
-                color=hikari.Color.of(0x8dc63f),
+                color=hikari.Color.of(0x8DC63F),
             )
             .add_field("Groupe", group.value["name"], inline=True)
             .add_field("Semaine", edt.options.get_pretty_week(), inline=True)
@@ -55,14 +57,21 @@ async def my_command(
 
         embeds.append(embed)
 
+    buttons = [
+        nav.PrevButton(),
+        nav.IndicatorButton(),
+        nav.NextButton(),
+        StopAndRemoveComponentsButton(),
+    ]
+
     if exclusive is True:
         navigator = exclusive_items(
             nav.NavigatorView,
-            ctx.user, 
-            error_message=f"Interaction bloquée : cette vue appartient à <@{ctx.user.id}>."
-        )(pages=embeds)
+            ctx.user,
+            error_message=f"Interaction bloquée : cette vue appartient à <@{ctx.user.id}>.",
+        )(pages=embeds, items=buttons)
     else:
-        navigator = nav.NavigatorView(pages=embeds)
+        navigator = nav.NavigatorView(pages=embeds, items=buttons)
 
     builder = await navigator.build_response_async(miru_client, start_at=2)
     await ctx.respond_with_builder(builder)
@@ -72,6 +81,7 @@ async def my_command(
 @arc.loader
 def loader(client: arc.GatewayClient) -> None:
     client.add_plugin(plugin)
+
 
 @arc.unloader
 def unloader(client: arc.GatewayClient) -> None:
