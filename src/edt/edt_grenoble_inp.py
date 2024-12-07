@@ -5,13 +5,47 @@ import os
 from enum import Enum
 from pathlib import Path
 
-from src.utils.datetime_utils import select_current_week, get_week_id, get_first_day_of_week
+from src.utils.datetime_utils import (
+    select_current_week,
+    get_week_id,
+    get_first_day_of_week,
+)
 
 
 class EdtGrenobleInpGroupsEnum(Enum):
     Group1AA = {"name": "1AA", "resource": 6388}
     Group2AA = {"name": "2AA", "resource": 9314}
 
+    Group1AG1 = {"name": "1A_G1", "resource": 9364}
+    Group1AG2 = {"name": "1A_G2", "resource": 9362}
+    Group1AG3 = {"name": "1A_G3", "resource": 9363}
+    Group1AG4 = {"name": "1A_G4", "resource": 9367}
+    Group1AG5 = {"name": "1A_G5", "resource": 9368}
+    Group1AG6 = {"name": "1A_G6", "resource": 9365}
+    Group1AG7 = {"name": "1A_G7", "resource": 9366}
+    Group1AG8 = {"name": "1A_G8", "resource": 9369}
+
+    GroupIF2A_G1 = {"name": "IF2A_G1", "resource": 9358}
+    GroupIF2A_G2 = {"name": "IF2A_G2", "resource": 9359}
+
+    GroupISI2A_G1 = {"name": "ISI2A_G1", "resource": 9353}
+    GroupISI2A_G2 = {"name": "ISI2A_G2", "resource": 9351}
+    GroupISI2A_G3 = {"name": "ISI2A_G3", "resource": 9352}
+    GroupISI2A_G4 = {"name": "ISI2A_G4", "resource": 9350}
+
+    GroupMMIS2A_G1 = {"name": "MMIS2A_G1", "resource": 9355}
+    GroupMMIS2A_G2 = {"name": "MMIS2A_G2", "resource": 5579}
+    GroupMMIS2A_G3 = {"name": "MMIS2A_G3", "resource": 9356}
+
+    GroupSEOC2A_ENSIMAG = {"name": "SEOC2A_ENSIMAG", "resource": 9347}
+    GroupSEOC2A_G1 = {"name": "SEOC2A_G1", "resource": 9348}
+    GroupSEOC2A_PHELMA = {"name": "SEOC2A_PHELMA", "resource": 9345}
+
+    # GroupIF3A_I2MF = {"name": "IF3A_I2MF", "resource": 9322}
+    # GroupIF3A_MEQA = {"name": "IF3A_MEQA", "resource": 9321}
+    # GroupISI3A = {"name": "ISI3A", "resource": 9318}
+    # GroupMMIS3A = {"name": "MMIS3A", "resource": 9317}
+    # GroupSEOC3A = {"name": "SEOC3A", "resource": 9319}
 
 class EdtGrenobleInpOptions:
     DEFAULT_WIDTH = 900
@@ -50,8 +84,7 @@ class EdtGrenobleInpOptions:
         :type current_week: int, optional
         """
         self.week_id = (
-            get_week_id(self.FIRST_WEEK_MONDAY, select_current_week())
-            + selected_week
+            get_week_id(self.FIRST_WEEK_MONDAY, select_current_week()) + selected_week
         )
 
     def set_group(self, group: EdtGrenobleInpGroupsEnum) -> None:
@@ -132,11 +165,15 @@ class EdtGrenobleInpClient:
 
         filename = f"data/edt-{group.name}-{self.options.week_id}.png"
 
-        # download the file only if it was downloaded more than a day ago, 
+        # download the file only if it was downloaded more than a day ago,
         # or if it was downloaded more than a hour ago but is for the current week
         if Path(filename).is_file():
             mtime = datetime.datetime.fromtimestamp(os.stat(filename).st_mtime)
-            threshold = datetime.timedelta(hours=1) if selected_week == 0 else datetime.timedelta(days=1)
+            threshold = (
+                datetime.timedelta(hours=1)
+                if selected_week == 0
+                else datetime.timedelta(days=1)
+            )
             if mtime > datetime.datetime.now() - threshold:
                 return
 
