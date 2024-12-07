@@ -32,9 +32,15 @@ async def my_command(
     week: arc.Option[
         int,
         arc.IntParams(
-            "Semaine",
+            "Semaine : relativement à la semaine actuelle (1=sem suivante, -1=précédente, etc.)",
         ),
     ] = 0,
+    exclusive: arc.Option[
+        bool,
+        arc.BoolParams(
+            "Vue exclusive : personne d'autre ne peut interagir avec cette vue.",
+        ),
+    ] = True,
 ) -> None:
     edt = EdtGrenobleInpClient()
 
@@ -57,11 +63,14 @@ async def my_command(
 
         embeds.append(embed)
 
-    navigator = exclusive_items(
-        nav.NavigatorView,
-        ctx.user, 
-        error_message=f"Interaction bloquée : cette vue appartient à <@{ctx.user.id}>."
-    )(pages=embeds)
+    if exclusive:
+        navigator = exclusive_items(
+            nav.NavigatorView,
+            ctx.user, 
+            error_message=f"Interaction bloquée : cette vue appartient à <@{ctx.user.id}>."
+        )(pages=embeds)
+    else:
+        navigator = nav.NavigatorView(pages=embeds)
 
     builder = await navigator.build_response_async(client, start_at=2)
     await ctx.respond_with_builder(builder)
