@@ -6,6 +6,7 @@ import arc
 from dotenv import load_dotenv
 from miru.ext import nav
 
+from src.bot.components.decorators import exclusive_items
 from src.edt.edt_grenoble_inp import EdtGrenobleInpClient, EdtGrenobleInpGroupsEnum
 
 load_dotenv()
@@ -56,7 +57,11 @@ async def my_command(
 
         embeds.append(embed)
 
-    navigator = nav.NavigatorView(pages=embeds)
+    navigator = exclusive_items(
+        nav.NavigatorView,
+        ctx.user, 
+        error_message=f"Interaction bloquée : cette vue appartient à <@{ctx.user.id}>."
+    )(pages=embeds)
 
     builder = await navigator.build_response_async(client, start_at=2)
     await ctx.respond_with_builder(builder)
