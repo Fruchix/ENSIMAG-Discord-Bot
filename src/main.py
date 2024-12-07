@@ -14,4 +14,5 @@ arc_client = arc.GatewayClient(bot)
 
 arc_client.load_extensions_from("src/bot/plugins")
 
-bot.run()
+if __name__ == "__main__":
+    bot.run()
