@@ -6,10 +6,15 @@ from enum import Enum
 from pathlib import Path
 
 from src.utils.datetime_utils import (
-    select_current_week,
-    get_week_id,
+    get_week_id_relative_to_current,
     get_first_day_of_week,
 )
+from src.utils.logging_utils import init_logger
+
+from src.config import LOG_FILE_EDT, EDT_DIR
+
+
+logger = init_logger(LOG_FILE_EDT, "ensimag-bot.edt")
 
 
 class EdtGrenobleInpGroupsEnum(Enum):
@@ -47,6 +52,7 @@ class EdtGrenobleInpGroupsEnum(Enum):
     # GroupMMIS3A = {"name": "MMIS3A", "resource": 9317}
     # GroupSEOC3A = {"name": "SEOC3A", "resource": 9319}
 
+
 class EdtGrenobleInpOptions:
     DEFAULT_WIDTH = 900
     DEFAULT_HEIGHT = 900
@@ -83,8 +89,8 @@ class EdtGrenobleInpOptions:
         :param current_week: number of weeks to shift from the current, defaults to 0
         :type current_week: int, optional
         """
-        self.week_id = (
-            get_week_id(self.FIRST_WEEK_MONDAY, select_current_week()) + selected_week
+        self.week_id = get_week_id_relative_to_current(
+            self.FIRST_WEEK_MONDAY, selected_week
         )
 
     def set_group(self, group: EdtGrenobleInpGroupsEnum) -> None:
@@ -121,6 +127,9 @@ class EdtGrenobleInpClient:
             "https://edt.grenoble-inp.fr/2024-2025/exterieur/jsp/standard/direct_planning.jsp"
         )
         self._init_identifier()
+        logger.info(
+            f"Created new Session for client with: JSESSIONID='{self.session.cookies.get_dict()['JSESSIONID']}'."
+        )
 
     def _init_identifier(self):
         self.session.get(
@@ -131,6 +140,7 @@ class EdtGrenobleInpClient:
         )
 
         self.identifier = r.text.split("identifier=")[1].split("&")[0]
+        logger.info(f"Client's identifier is now: identifier='{self.identifier}'.")
 
     def request(self, func_request_method, *args, **kwargs) -> requests.Response:
         """Wrapper to any http method from the requests module.
@@ -163,7 +173,11 @@ class EdtGrenobleInpClient:
         self.options.set_group(group)
         self.options.set_week_id_relative_to_current(selected_week)
 
-        filename = f"data/edt-{group.name}-{self.options.week_id}.png"
+        filename = Path(EDT_DIR, f"edt-{group.name}-{self.options.week_id}.png")
+
+        logger.info(
+            f"Downloading {filename}: week='{self.options.week_id}',group='{self.options.group}' with identifier='{self.identifier}'."
+        )
 
         # download the file only if it was downloaded more than a day ago,
         # or if it was downloaded more than a hour ago but is for the current week
@@ -175,6 +189,9 @@ class EdtGrenobleInpClient:
                 else datetime.timedelta(days=1)
             )
             if mtime > datetime.datetime.now() - threshold:
+                logger.info(
+                    f"{filename} was already downloaded within the threshold='{threshold}'."
+                )
                 return
 
         try:
@@ -209,5 +226,11 @@ class EdtGrenobleInpClient:
             stream=True,
         ) as r:
             if r.status_code != 200 or r.headers["Content-Type"] != "image/gif":
+                logger.error(
+                    f"Failed edt request: week='{self.options.week_id}',group='{self.options.group}' with identifier='{self.identifier}'."
+                )
                 return None
+            logger.info(
+                f"Successful edt request: week='{self.options.week_id}',group='{self.options.group}' with identifier='{self.identifier}'."
+            )
             return r.content

@@ -1,7 +1,6 @@
-import hikari
-import miru
-import os
 import arc
+import hikari
+import os
 
 from dotenv import load_dotenv
 
