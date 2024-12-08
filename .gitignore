@@ -4,9 +4,10 @@ __pycache__/
 *$py.class
 
 # Python env
-.env
 venv/
 
+# secrets
+.env
 
-data/*
-!data/.gitkeep
+data/**/*.png
+data/**/*.logs
